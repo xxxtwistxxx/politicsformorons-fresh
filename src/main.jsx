@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp, MapPin } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp, MapPin, Gavel, DollarSign, Calendar, Building } from 'lucide-react';
 
-// Inline styles
+// Inline styles (same as before)
 const styles = {
   body: {
     margin: 0,
@@ -43,22 +43,6 @@ const styles = {
     textDecoration: 'none',
     fontWeight: '500',
     transition: 'color 0.2s'
-  },
-  adminButton: {
-    padding: '0.5rem 0.75rem',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    border: '1px solid #d1d5db',
-    backgroundColor: '#f3f4f6',
-    color: '#6b7280',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  },
-  adminButtonActive: {
-    backgroundColor: '#fef2f2',
-    color: '#dc2626',
-    borderColor: '#fca5a5'
   },
   container: {
     maxWidth: '1280px',
@@ -398,7 +382,7 @@ const styles = {
   },
   controlsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minWidth(200px, 1fr))',
     gap: '1rem'
   },
   controlButton: {
@@ -516,6 +500,14 @@ const cssAnimations = `
 // Main App Component
 const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
+  
+  // Check for admin access via secret URL
+  useEffect(() => {
+    if (location.pathname === '/willy-wonka-factory' || location.pathname === '/admin-secret-2025') {
+      setIsAdmin(true);
+    }
+  }, [location.pathname]);
   
   useEffect(() => {
     // Inject CSS animations
@@ -534,22 +526,26 @@ const App = () => {
   return (
     <Router>
       <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-        <Navigation isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
+        <Navigation isAdmin={isAdmin} />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/politicians" element={<PoliticianList />} />
           <Route path="/politician/:id" element={<PoliticianDetail />} />
           <Route path="/articles" element={<ArticleList />} />
           <Route path="/dashboard" element={<UserDashboard />} />
-          {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
+          <Route path="/bills" element={<BillsList />} />
+          <Route path="/education" element={<EducationCenter />} />
+          {/* Secret admin routes */}
+          <Route path="/willy-wonka-factory" element={<AdminDashboard />} />
+          <Route path="/admin-secret-2025" element={<AdminDashboard />} />
         </Routes>
       </div>
     </Router>
   );
 };
 
-// Navigation Component
-const Navigation = ({ isAdmin, setIsAdmin }) => {
+// Navigation Component (no admin button)
+const Navigation = ({ isAdmin }) => {
   return (
     <nav style={styles.nav}>
       <div style={styles.navContainer}>
@@ -564,43 +560,46 @@ const Navigation = ({ isAdmin, setIsAdmin }) => {
           <Link to="/politicians" style={styles.navLink} className="nav-link">
             Politicians
           </Link>
+          <Link to="/bills" style={styles.navLink} className="nav-link">
+            Bills & Votes
+          </Link>
           <Link to="/articles" style={styles.navLink} className="nav-link">
             Articles
+          </Link>
+          <Link to="/education" style={styles.navLink} className="nav-link">
+            Education
           </Link>
           <Link to="/dashboard" style={styles.navLink} className="nav-link">
             My Dashboard
           </Link>
           
-          <button
-            onClick={() => setIsAdmin(!isAdmin)}
-            style={{
-              ...styles.adminButton,
-              ...(isAdmin ? styles.adminButtonActive : {})
-            }}
-          >
-            {isAdmin ? '🔧 Admin Mode' : 'Admin'}
-          </button>
+          {/* Only show admin link if already in admin mode */}
+          {isAdmin && (
+            <Link to="/willy-wonka-factory" style={{...styles.navLink, color: '#dc2626'}} className="nav-link">
+              🔧 Admin
+            </Link>
+          )}
         </div>
       </div>
     </nav>
   );
 };
 
-// Homepage Component
+// Homepage Component with factual data
 const HomePage = () => {
   const [stats, setStats] = useState({
     politicians: 537,
-    corruptionLevel: '∞',
-    problemsSolved: 0,
-    avgAge: 64
+    billsThisSession: 0,
+    stockTrades: 0,
+    daysInSession: 0
   });
 
   const [tickerFacts] = useState([
-    "29% of Americans can't find the Pacific Ocean on a map",
     "Congress has a 21% approval rating but 95% reelection rate",
-    "Average politician is older than the internet",
-    "More Americans can name all Kardashians than their representatives",
-    "Student debt has increased 1,200% since 1980"
+    "Average politician is 20 years older than the median American",
+    "Members of Congress outperformed the S&P 500 by 12% in 2023",
+    "Only 27% of Americans can name their House representative",
+    "Congressional stock trades are disclosed 45 days after the fact"
   ]);
 
   const [currentFact, setCurrentFact] = useState(0);
@@ -608,9 +607,29 @@ const HomePage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentFact((prev) => (prev + 1) % tickerFacts.length);
-    }, 8000); // Changed from 3000 to 8000 (8 seconds)
+    }, 8000);
     return () => clearInterval(interval);
   }, [tickerFacts.length]);
+
+  // Load real stats from API
+  useEffect(() => {
+    // TODO: Replace with real API calls
+    const loadStats = async () => {
+      try {
+        // Mock data for now - will be replaced with real API
+        setStats({
+          politicians: 537,
+          billsThisSession: 1247,
+          stockTrades: 3891,
+          daysInSession: 147
+        });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    };
+    
+    loadStats();
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -624,7 +643,7 @@ const HomePage = () => {
         
         <div style={styles.ticker}>
           <p style={styles.tickerText}>
-            💡 Fun Fact: {tickerFacts[currentFact]}
+            💡 Fact: {tickerFacts[currentFact]}
           </p>
         </div>
       </div>
@@ -634,46 +653,58 @@ const HomePage = () => {
           title="Politicians Tracked"
           value={stats.politicians}
           icon={<Users size={32} color="#3b82f6" />}
-          subtitle="All 537 disappointments"
+          subtitle="All 537 federal representatives"
         />
         <StatCard
-          title="Corruption Level"
-          value={stats.corruptionLevel}
-          icon={<AlertTriangle size={32} color="#ef4444" />}
-          subtitle="Off the charts"
+          title="Bills This Session"
+          value={stats.billsThisSession.toLocaleString()}
+          icon={<Gavel size={32} color="#10b981" />}
+          subtitle="Introduced in 118th Congress"
         />
         <StatCard
-          title="Problems Solved"
-          value={stats.problemsSolved}
-          icon={<TrendingUp size={32} color="#10b981" />}
-          subtitle="Still waiting..."
+          title="Stock Trades Disclosed"
+          value={stats.stockTrades.toLocaleString()}
+          icon={<DollarSign size={32} color="#f59e0b" />}
+          subtitle="By members in 2024"
         />
         <StatCard
-          title="Average Age"
-          value={stats.avgAge}
-          icon={<Activity size={32} color="#8b5cf6" />}
-          subtitle="Older than WiFi"
+          title="Days in Session"
+          value={stats.daysInSession}
+          icon={<Calendar size={32} color="#8b5cf6" />}
+          subtitle="Out of 365 this year"
         />
       </div>
 
       <div style={styles.actionsGrid}>
         <ActionCard
           title="Find Your Rep"
-          description="See who's supposed to represent you (spoiler: they don't)"
+          description="See who represents you and how they vote on issues that matter"
           link="/dashboard"
           icon="🗳️"
         />
         <ActionCard
           title="Browse Politicians"
-          description="Rate their corruption levels and laugh at their bios"
+          description="Explore detailed profiles with voting records and financial data"
           link="/politicians"
           icon="🏛️"
         />
         <ActionCard
+          title="Bills & Voting"
+          description="Track legislation and see how your representatives vote"
+          link="/bills"
+          icon="📜"
+        />
+        <ActionCard
           title="Latest Articles"
-          description="Political news translated into millennial"
+          description="Political news and analysis based on factual data"
           link="/articles"
           icon="📰"
+        />
+        <ActionCard
+          title="Education Center"
+          description="Learn how government works and why it matters"
+          link="/education"
+          icon="🎓"
         />
       </div>
     </div>
@@ -703,68 +734,85 @@ const ActionCard = ({ title, description, link, icon }) => {
   );
 };
 
-// Politician List Component
+// Politician List Component (will be updated to load from database)
 const PoliticianList = () => {
   const [politicians, setPoliticians] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterParty, setFilterParty] = useState('all');
+  const [filterChamber, setFilterChamber] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mockPoliticians = [
-      {
-        id: 1,
-        name: "Alexandria Ocasio-Cortez",
-        party: "Democrat",
-        state: "NY",
-        chamber: "House",
-        corruptionScore: 15,
-        givesADamnRating: 9,
-        bio: "Actually fights for millennials (shocking, we know)",
-        photoUrl: "/api/placeholder/150/150"
-      },
-      {
-        id: 2,
-        name: "Mitch McConnell",
-        party: "Republican",
-        state: "KY",
-        chamber: "Senate",
-        corruptionScore: 95,
-        givesADamnRating: 1,
-        bio: "Turtle who thinks climate change is a hoax",
-        photoUrl: "/api/placeholder/150/150"
-      },
-      {
-        id: 3,
-        name: "Bernie Sanders",
-        party: "Independent",
-        state: "VT",
-        chamber: "Senate",
-        corruptionScore: 20,
-        givesADamnRating: 8,
-        bio: "Still asking for your financial support",
-        photoUrl: "/api/placeholder/150/150"
+    // TODO: Replace with real database call
+    const loadPoliticians = async () => {
+      try {
+        // Mock data for now - will be replaced with real API
+        const mockPoliticians = [
+          {
+            id: 1,
+            name: "Alexandria Ocasio-Cortez",
+            party: "Democrat",
+            state: "NY",
+            district: "14",
+            chamber: "House",
+            corruptionScore: 15,
+            givesADamnRating: 9,
+            stockTrades: 0,
+            billsSponsored: 23,
+            photoUrl: "/api/placeholder/150/150"
+          },
+          {
+            id: 2,
+            name: "Mitch McConnell",
+            party: "Republican",
+            state: "KY",
+            chamber: "Senate",
+            corruptionScore: 85,
+            givesADamnRating: 2,
+            stockTrades: 47,
+            billsSponsored: 8,
+            photoUrl: "/api/placeholder/150/150"
+          },
+          {
+            id: 3,
+            name: "Bernie Sanders",
+            party: "Independent",
+            state: "VT",
+            chamber: "Senate",
+            corruptionScore: 20,
+            givesADamnRating: 8,
+            stockTrades: 0,
+            billsSponsored: 31,
+            photoUrl: "/api/placeholder/150/150"
+          }
+        ];
+        
+        setTimeout(() => {
+          setPoliticians(mockPoliticians);
+          setLoading(false);
+        }, 1000);
+      } catch (error) {
+        console.error('Error loading politicians:', error);
+        setLoading(false);
       }
-    ];
+    };
     
-    setTimeout(() => {
-      setPoliticians(mockPoliticians);
-      setLoading(false);
-    }, 1000);
+    loadPoliticians();
   }, []);
 
   const filteredPoliticians = politicians.filter(politician => {
     const matchesSearch = politician.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          politician.state.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesParty = filterParty === 'all' || politician.party.toLowerCase() === filterParty.toLowerCase();
-    return matchesSearch && matchesParty;
+    const matchesChamber = filterChamber === 'all' || politician.chamber.toLowerCase() === filterChamber.toLowerCase();
+    return matchesSearch && matchesParty && matchesChamber;
   });
 
   if (loading) {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner}></div>
-        <p>Loading politicians... (this might take a while, they're slow)</p>
+        <p>Loading politicians from database...</p>
       </div>
     );
   }
@@ -772,7 +820,7 @@ const PoliticianList = () => {
   return (
     <div style={styles.politiciansContainer}>
       <h1 style={styles.pageTitle}>
-        Find Your Disappointment
+        Congressional Directory
       </h1>
 
       <div style={styles.searchContainer} className="search-container">
@@ -797,6 +845,16 @@ const PoliticianList = () => {
           <option value="republican">Republicans</option>
           <option value="independent">Independents</option>
         </select>
+
+        <select
+          style={styles.select}
+          value={filterChamber}
+          onChange={(e) => setFilterChamber(e.target.value)}
+        >
+          <option value="all">Both Chambers</option>
+          <option value="house">House</option>
+          <option value="senate">Senate</option>
+        </select>
       </div>
 
       <div style={styles.politiciansGrid}>
@@ -814,7 +872,7 @@ const PoliticianList = () => {
   );
 };
 
-// Politician Card Component
+// Enhanced Politician Card Component
 const PoliticianCard = ({ politician }) => {
   const getCorruptionStyle = (score) => {
     if (score < 30) return styles.corruptionLow;
@@ -845,34 +903,65 @@ const PoliticianCard = ({ politician }) => {
               {politician.party}
             </span>
             <span style={{...styles.tag, ...styles.tagIndependent}}>
-              {politician.state} - {politician.chamber}
+              {politician.state}{politician.district ? `-${politician.district}` : ''} - {politician.chamber}
             </span>
           </div>
         </div>
       </div>
 
-      <p style={styles.politicianBio}>"{politician.bio}"</p>
+      <div style={{marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280'}}>
+        <div>📊 Bills Sponsored: {politician.billsSponsored}</div>
+        <div>💰 Stock Trades: {politician.stockTrades}</div>
+      </div>
 
       <div style={styles.politicianStats}>
         <div style={styles.statBadge}>
           <div style={{...styles.corruptionScore, ...getCorruptionStyle(politician.corruptionScore)}}>
             {politician.corruptionScore}%
           </div>
-          <div style={styles.statLabel}>Corrupt</div>
+          <div style={styles.statLabel}>Corruption Risk</div>
         </div>
         
         <div style={styles.statBadge}>
           <div style={styles.givesADamnScore}>
             {politician.givesADamnRating}/10
           </div>
-          <div style={styles.statLabel}>Gives a Damn</div>
+          <div style={styles.statLabel}>People First Score</div>
         </div>
       </div>
     </Link>
   );
 };
 
-// Other components with basic styling...
+// New Bills List Component
+const BillsList = () => {
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.pageTitle}>Bills & Voting Records</h1>
+      <div style={styles.statCard}>
+        <p style={{color: '#6b7280', textAlign: 'center'}}>
+          Bills and voting records section coming soon...
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// New Education Center Component
+const EducationCenter = () => {
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.pageTitle}>Education Center</h1>
+      <div style={styles.statCard}>
+        <p style={{color: '#6b7280', textAlign: 'center'}}>
+          Educational content about government and politics coming soon...
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Other components remain the same...
 const PoliticianDetail = () => {
   const navigate = useNavigate();
   
@@ -901,27 +990,27 @@ const ArticleList = () => {
     const mockArticles = [
       {
         id: 1,
-        title: "Why Your Rep Thinks Avocado Toast Caused Inflation",
-        summary: "Breaking down the latest economic hot takes from people who haven't bought groceries since 1987",
+        title: "Congressional Stock Trading: The Numbers Don't Lie",
+        summary: "Analysis of 2024 financial disclosures shows concerning patterns in congressional trading",
         publishedAt: "2025-01-27T10:00:00Z",
-        category: "Economic Policy",
-        readTime: "3 min read"
+        category: "Financial Transparency",
+        readTime: "4 min read"
       },
       {
         id: 2,
-        title: "Climate Change Denial: A Masterclass in Ignoring Science",
-        summary: "How politicians continue to pretend the planet isn't literally on fire",
+        title: "Voting Record Analysis: Who Really Represents the People?",
+        summary: "Data-driven analysis of voting patterns on key legislation affecting everyday Americans",
         publishedAt: "2025-01-27T08:00:00Z",
-        category: "Environment",
-        readTime: "5 min read"
+        category: "Voting Records",
+        readTime: "6 min read"
       },
       {
         id: 3,
-        title: "Student Loans: The Gift That Keeps on Taking",
-        summary: "Why your education debt will outlive you (and possibly your children)",
+        title: "Lobbying Influence: Following the Money Trail",
+        summary: "Tracking the correlation between lobbying expenditures and legislative outcomes",
         publishedAt: "2025-01-26T15:00:00Z",
-        category: "Education",
-        readTime: "4 min read"
+        category: "Lobbying",
+        readTime: "5 min read"
       }
     ];
 
@@ -943,7 +1032,7 @@ const ArticleList = () => {
   return (
     <div style={styles.container}>
       <h1 style={styles.pageTitle}>
-        Political News for Humans
+        Data-Driven Political Analysis
       </h1>
 
       <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
@@ -1146,7 +1235,7 @@ const AdminDashboard = () => {
   return (
     <div style={styles.adminDashboard}>
       <h1 style={styles.adminTitle}>
-        🎛️ Admin Dashboard - Your Willy Wonka Factory
+        🎛️ Admin Dashboard - Willy Wonka Factory
       </h1>
 
       <div style={styles.statusGrid}>
@@ -1204,7 +1293,7 @@ const AdminDashboard = () => {
         <div style={styles.activityList}>
           <ActivityItem
             time="2 minutes ago"
-            message="Content Generator: Generated article 'Why Your Rep Thinks TikTok Causes Inflation'"
+            message="Content Generator: Generated article 'Congressional Stock Trading Analysis'"
             type="success"
           />
           <ActivityItem
@@ -1219,8 +1308,8 @@ const AdminDashboard = () => {
           />
           <ActivityItem
             time="2 hours ago"
-            message="Breaking News Alert: Senator caught using TikTok during climate hearing"
-            type="warning"
+            message="Database: Successfully loaded 537 politician records"
+            type="success"
           />
         </div>
       </div>
