@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp, MapPin } from 'lucide-react';
-import './index.css';
+
 
 // Main App Component
 const App = () => {
