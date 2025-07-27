@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react
 import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp, MapPin, Gavel, DollarSign, Calendar, Building } from 'lucide-react';
 
 // API Configuration
-const API_BASE = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+const API_BASE = process.env.NODE_ENV === 'production' ? 'https://snhwy1na8i.execute-api.us-east-1.amazonaws.com/prod' : 'http://localhost:5000';
+
 
 // API Helper Functions
 const apiCall = async (endpoint, options = {}) => {
