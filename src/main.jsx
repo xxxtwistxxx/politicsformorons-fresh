@@ -3,7 +3,33 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp, MapPin, Gavel, DollarSign, Calendar, Building } from 'lucide-react';
 
-// Inline styles
+// API Configuration
+const API_BASE = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+
+// API Helper Functions
+const apiCall = async (endpoint, options = {}) => {
+  try {
+    const response = await fetch(`${API_BASE}/api${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'PoliticsForMorons-Frontend/1.0',
+        ...options.headers
+      },
+      ...options
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`API call failed for ${endpoint}:`, error);
+    throw error;
+  }
+};
+
+// Inline styles (same as before)
 const styles = {
   body: {
     margin: 0,
@@ -144,6 +170,153 @@ const styles = {
     color: '#1f2937',
     textAlign: 'center',
     marginBottom: '2rem'
+  },
+  searchContainer: {
+    marginBottom: '2rem',
+    display: 'flex',
+    gap: '1rem',
+    flexWrap: 'wrap'
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: '300px',
+    padding: '0.75rem',
+    paddingLeft: '2.5rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '0.5rem',
+    fontSize: '1rem'
+  },
+  searchInputContainer: {
+    position: 'relative',
+    flex: 1,
+    minWidth: '300px'
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '0.75rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#9ca3af'
+  },
+  select: {
+    padding: '0.75rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '0.5rem',
+    fontSize: '1rem',
+    backgroundColor: 'white'
+  },
+  politiciansGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+    gap: '1.5rem'
+  },
+  politicianCard: {
+    backgroundColor: 'white',
+    borderRadius: '0.5rem',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    padding: '1.5rem',
+    textDecoration: 'none',
+    color: 'inherit',
+    transition: 'box-shadow 0.2s',
+    display: 'block'
+  },
+  politicianHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '1rem'
+  },
+  politicianPhoto: {
+    width: '4rem',
+    height: '4rem',
+    borderRadius: '50%',
+    marginRight: '1rem',
+    backgroundColor: '#e5e7eb'
+  },
+  politicianName: {
+    fontSize: '1.125rem',
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: '0.25rem'
+  },
+  politicianTags: {
+    display: 'flex',
+    gap: '0.5rem',
+    flexWrap: 'wrap'
+  },
+  tag: {
+    padding: '0.25rem 0.5rem',
+    borderRadius: '0.25rem',
+    fontSize: '0.75rem',
+    fontWeight: '500'
+  },
+  tagDemocrat: {
+    backgroundColor: '#dbeafe',
+    color: '#1e40af'
+  },
+  tagRepublican: {
+    backgroundColor: '#fecaca',
+    color: '#dc2626'
+  },
+  tagIndependent: {
+    backgroundColor: '#f3f4f6',
+    color: '#1f2937'
+  },
+  politicianStats: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  statBadge: {
+    textAlign: 'center'
+  },
+  corruptionScore: {
+    fontSize: '1.125rem',
+    fontWeight: 'bold',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '0.25rem'
+  },
+  corruptionLow: {
+    backgroundColor: '#dcfce7',
+    color: '#166534'
+  },
+  corruptionMedium: {
+    backgroundColor: '#fef3c7',
+    color: '#92400e'
+  },
+  corruptionHigh: {
+    backgroundColor: '#fecaca',
+    color: '#dc2626'
+  },
+  givesADamnScore: {
+    fontSize: '1.125rem',
+    fontWeight: 'bold',
+    color: '#3b82f6'
+  },
+  statLabel: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    marginTop: '0.25rem'
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '3rem'
+  },
+  spinner: {
+    width: '2rem',
+    height: '2rem',
+    border: '2px solid #f3f3f3',
+    borderTop: '2px solid #3b82f6',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    margin: '0 auto 1rem'
+  },
+  error: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    color: '#dc2626',
+    textAlign: 'center'
   }
 };
 
@@ -162,9 +335,21 @@ const cssAnimations = `
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
 }
 
+.politician-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2rem !important;
+  }
+  
+  .search-container {
+    flex-direction: column;
+  }
+  
+  .search-input-container {
+    min-width: 100% !important;
   }
   
   .nav-links {
@@ -244,14 +429,16 @@ const Navigation = () => {
   );
 };
 
-// Homepage Component
+// Homepage Component with real API data
 const HomePage = () => {
   const [stats, setStats] = useState({
-    politicians: 537,
-    billsThisSession: 1247,
-    stockTrades: 3891,
-    daysInSession: 147
+    politicians: 0,
+    billsThisSession: 0,
+    stockTrades: 0,
+    daysInSession: 0
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [tickerFacts] = useState([
     "Congress has a 21% approval rating but 95% reelection rate",
@@ -270,8 +457,49 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [tickerFacts.length]);
 
+  // Load real stats from API
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const data = await apiCall('/stats');
+        setStats(data);
+        setError(null);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        setError('Failed to load statistics. Using fallback data.');
+        // Fallback to mock data if API fails
+        setStats({
+          politicians: 537,
+          billsThisSession: 1247,
+          stockTrades: 3891,
+          daysInSession: 147
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.spinner}></div>
+        <p>Loading real data from secure database...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
+      {error && (
+        <div style={styles.error}>
+          <p>{error}</p>
+        </div>
+      )}
+      
       <div style={styles.hero}>
         <h1 style={styles.heroTitle} className="hero-title">
           Welcome to the Shitshow
@@ -373,33 +601,315 @@ const ActionCard = ({ title, description, link, icon }) => {
   );
 };
 
-// Simple placeholder components
+// Politician List Component with real API data
 const PoliticianList = () => {
+  const [politicians, setPoliticians] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterParty, setFilterParty] = useState('all');
+  const [filterChamber, setFilterChamber] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadPoliticians = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (filterParty !== 'all') params.append('party', filterParty);
+        if (filterChamber !== 'all') params.append('chamber', filterChamber);
+        
+        const data = await apiCall(`/politicians?${params.toString()}`);
+        setPoliticians(data.politicians || []);
+        setError(null);
+      } catch (error) {
+        console.error('Error loading politicians:', error);
+        setError('Failed to load politicians from database.');
+        setPoliticians([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPoliticians();
+  }, [searchTerm, filterParty, filterChamber]);
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.spinner}></div>
+        <p>Loading politicians from secure database...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
-      <h1 style={styles.pageTitle}>Congressional Directory</h1>
-      <div style={styles.statCard}>
-        <p style={{color: '#6b7280', textAlign: 'center'}}>
-          Loading politicians from database...
-        </p>
+      <h1 style={styles.pageTitle}>
+        Congressional Directory
+      </h1>
+
+      {error && (
+        <div style={styles.error}>
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div style={styles.searchContainer} className="search-container">
+        <div style={styles.searchInputContainer} className="search-input-container">
+          <Search style={styles.searchIcon} size={16} />
+          <input
+            type="text"
+            placeholder="Search by name or state..."
+            style={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <select
+          style={styles.select}
+          value={filterParty}
+          onChange={(e) => setFilterParty(e.target.value)}
+        >
+          <option value="all">All Parties</option>
+          <option value="democrat">Democrats</option>
+          <option value="republican">Republicans</option>
+          <option value="independent">Independents</option>
+        </select>
+
+        <select
+          style={styles.select}
+          value={filterChamber}
+          onChange={(e) => setFilterChamber(e.target.value)}
+        >
+          <option value="all">Both Chambers</option>
+          <option value="house">House</option>
+          <option value="senate">Senate</option>
+        </select>
+      </div>
+
+      <div style={styles.politiciansGrid}>
+        {politicians.map(politician => (
+          <PoliticianCard key={politician.id} politician={politician} />
+        ))}
+      </div>
+
+      {politicians.length === 0 && !loading && (
+        <div style={styles.loading}>
+          <p>No politicians found. Try different search terms.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Politician Card Component
+const PoliticianCard = ({ politician }) => {
+  const getCorruptionStyle = (score) => {
+    if (score < 30) return styles.corruptionLow;
+    if (score < 60) return styles.corruptionMedium;
+    return styles.corruptionHigh;
+  };
+
+  const getPartyStyle = (party) => {
+    switch (party.toLowerCase()) {
+      case 'democrat': return styles.tagDemocrat;
+      case 'republican': return styles.tagRepublican;
+      default: return styles.tagIndependent;
+    }
+  };
+
+  return (
+    <div style={styles.politicianCard} className="politician-card">
+      <div style={styles.politicianHeader}>
+        <img
+          src={politician.photoUrl}
+          alt={politician.name}
+          style={styles.politicianPhoto}
+        />
+        <div>
+          <h3 style={styles.politicianName}>{politician.name}</h3>
+          <div style={styles.politicianTags}>
+            <span style={{...styles.tag, ...getPartyStyle(politician.party)}}>
+              {politician.party}
+            </span>
+            <span style={{...styles.tag, ...styles.tagIndependent}}>
+              {politician.state}{politician.district ? `-${politician.district}` : ''} - {politician.chamber}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280'}}>
+        <div>📊 Bills Sponsored: {politician.billsSponsored}</div>
+        <div>💰 Stock Trades: {politician.stockTrades}</div>
+      </div>
+
+      <div style={styles.politicianStats}>
+        <div style={styles.statBadge}>
+          <div style={{...styles.corruptionScore, ...getCorruptionStyle(politician.corruptionScore)}}>
+            {politician.corruptionScore}%
+          </div>
+          <div style={styles.statLabel}>Corruption Risk</div>
+        </div>
+        
+        <div style={styles.statBadge}>
+          <div style={styles.givesADamnScore}>
+            {politician.givesADamnRating}/10
+          </div>
+          <div style={styles.statLabel}>People First Score</div>
+        </div>
       </div>
     </div>
   );
 };
 
+// Article List Component with real API data
 const ArticleList = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadArticles = async () => {
+      try {
+        setLoading(true);
+        const data = await apiCall('/articles');
+        setArticles(data.articles || []);
+        setError(null);
+      } catch (error) {
+        console.error('Error loading articles:', error);
+        setError('Failed to load articles.');
+        setArticles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadArticles();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.spinner}></div>
+        <p>Loading articles...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
-      <h1 style={styles.pageTitle}>Data-Driven Political Analysis</h1>
-      <div style={styles.statCard}>
-        <p style={{color: '#6b7280', textAlign: 'center'}}>
-          Articles coming soon...
-        </p>
+      <h1 style={styles.pageTitle}>
+        Data-Driven Political Analysis
+      </h1>
+
+      {error && (
+        <div style={styles.error}>
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+        {articles.map(article => (
+          <ArticleCard key={article.id} article={article} />
+        ))}
       </div>
     </div>
   );
 };
 
+const ArticleCard = ({ article }) => {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <div style={styles.statCard}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem'}}>
+        <span style={{...styles.tag, ...styles.tagDemocrat}}>
+          {article.category}
+        </span>
+        <span style={{fontSize: '0.875rem', color: '#6b7280'}}>{article.readTime}</span>
+      </div>
+      
+      <h2 style={{...styles.actionTitle, cursor: 'pointer', marginBottom: '0.75rem'}}>
+        {article.title}
+      </h2>
+      
+      <p style={{...styles.actionDescription, marginBottom: '1rem'}}>{article.summary}</p>
+      
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', color: '#6b7280'}}>
+        <span>{formatDate(article.publishedAt)}</span>
+        <button style={{padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer'}}>
+          Read More →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Admin Dashboard Component with real API data
+const AdminDashboard = () => {
+  const [systemStatus, setSystemStatus] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadAdminStatus = async () => {
+      try {
+        setLoading(true);
+        const data = await apiCall('/admin/status');
+        setSystemStatus(data);
+        setError(null);
+      } catch (error) {
+        console.error('Error loading admin status:', error);
+        setError('Failed to load admin status.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAdminStatus();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.spinner}></div>
+        <p>Loading admin dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.pageTitle}>
+        🎛️ Admin Dashboard - Willy Wonka Factory
+      </h1>
+
+      {error && (
+        <div style={styles.error}>
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div style={styles.statCard}>
+        <h2>System Status</h2>
+        <pre style={{backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '0.5rem', overflow: 'auto'}}>
+          {JSON.stringify(systemStatus, null, 2)}
+        </pre>
+      </div>
+    </div>
+  );
+};
+
+// Simple placeholder components
 const UserDashboard = () => {
   return (
     <div style={styles.container}>
@@ -433,19 +943,6 @@ const EducationCenter = () => {
       <div style={styles.statCard}>
         <p style={{color: '#6b7280', textAlign: 'center'}}>
           Educational content about government and politics coming soon...
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const AdminDashboard = () => {
-  return (
-    <div style={styles.container}>
-      <h1 style={styles.pageTitle}>🎛️ Admin Dashboard - Willy Wonka Factory</h1>
-      <div style={styles.statCard}>
-        <p style={{color: '#6b7280', textAlign: 'center'}}>
-          Admin dashboard coming soon...
         </p>
       </div>
     </div>
