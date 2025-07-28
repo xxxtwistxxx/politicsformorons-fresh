@@ -226,13 +226,15 @@ const styles = {
     alignItems: 'center',
     marginBottom: '1rem'
   },
-  politicianPhoto: {
-    width: '4rem',
-    height: '4rem',
-    borderRadius: '50%',
-    marginRight: '1rem',
-    backgroundColor: '#e5e7eb'
-  },
+ politicianPhoto: {
+  width: '4rem',
+  height: '4rem',
+  borderRadius: '50%',
+  marginRight: '1rem',
+  backgroundColor: '#e5e7eb',
+  objectFit: 'cover',        // This preserves aspect ratio!
+  objectPosition: 'center'   // Centers the image in the circle
+},
   politicianName: {
     fontSize: '1.125rem',
     fontWeight: '600',
