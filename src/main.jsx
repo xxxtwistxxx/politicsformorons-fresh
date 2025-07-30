@@ -625,7 +625,7 @@ const PoliticianList = () => {
         if (filterChamber !== 'all') params.append('chamber', filterChamber);
         
         const data = await apiCall(`/politicians?${params.toString()}`);
-        setPoliticians(data.politicians || []);
+        setPoliticians(data || []);
         setError(null);
       } catch (error) {
         console.error('Error loading politicians:', error);
