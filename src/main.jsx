@@ -6,6 +6,8 @@ import { Search, Users, FileText, Settings, Activity, AlertTriangle, TrendingUp,
 // API Configuration
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://snhwy1na8i.execute-api.us-east-1.amazonaws.com/prod';
 
+console.log('API_BASE configured as:', API_BASE);
+
 
 // API Helper Functions
 const apiCall = async (endpoint, options = {}) => {
@@ -867,8 +869,14 @@ const AdminDashboard = () => {
     const loadAdminStatus = async () => {
       try {
         setLoading(true);
-        const data = await apiCall('/admin/status');
-        setSystemStatus(data);
+        // Mock admin data since admin endpoints don't exist yet
+        const mockData = {
+          systemHealth: 'Operational',
+          lastUpdate: new Date().toISOString(),
+          totalPoliticians: 537,
+          apiStatus: 'Online'
+        };
+        setSystemStatus(mockData);
         setError(null);
       } catch (error) {
         console.error('Error loading admin status:', error);
